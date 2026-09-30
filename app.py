@@ -9,15 +9,23 @@ st.set_page_config(page_title="Skin Cancer Detection", page_icon="🩺")
 
 BASE_DIR = Path(__file__).resolve().parent
 MODEL_PATH = BASE_DIR / "models" / "skin_cancer_model.keras"
-CLASS_NAMES = [
-    "Actinic keratoses",
-    "Basal cell carcinoma",
-    "Benign keratosis",
-    "Dermatofibroma",
-    "Melanoma",
-    "Melanocytic nevi",
-    "Vascular lesions",
-]
+
+
+def get_class_names():
+    processed_dir = BASE_DIR / "data" / "processed"
+    if processed_dir.exists():
+        class_names = [p.name for p in sorted(processed_dir.iterdir()) if p.is_dir()]
+        if class_names:
+            return class_names
+
+    return [
+        "Actinic keratoses",
+        "Basal cell carcinoma",
+        "Benign keratosis",
+    ]
+
+
+CLASS_NAMES = get_class_names()
 
 
 @st.cache_resource
@@ -52,7 +60,12 @@ if uploaded_file is not None:
             max_index = int(np.argmax(predictions))
             confidence = float(predictions[max_index] * 100)
 
-            st.success(f"Diagnosis: **{CLASS_NAMES[max_index]}**")
+            if max_index >= len(CLASS_NAMES):
+                class_name = f"Class {max_index + 1}"
+            else:
+                class_name = CLASS_NAMES[max_index]
+
+            st.success(f"Diagnosis: **{class_name}**")
             st.info(f"Confidence: {confidence:.2f}%")
 
 else:
